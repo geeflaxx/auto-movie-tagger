@@ -17,8 +17,13 @@ import linecache
 import sys
 from json import JSONDecoder
 import tmdbsimple as tmdb
-from imdbpie import Imdb
+#from imdbpie import Imdb
 from mutagen.mp4 import MP4, MP4Cover
+
+##
+from imdb import Cinemagoer
+
+
 
 # The following subtitle codecs are ingored if found in the file as they are
 # not supported by the mp4 container. These are mainly picture-based subtitles
@@ -29,7 +34,7 @@ def collect_stream_metadata(filename):
     Returns a list of streams' metadata present in the media file passed as 
     the argument (filename) 
     """
-    command = 'ffprobe -i "{}" -show_streams -of json'.format(filename)
+    command = f'ffprobe -i {filename} -show_streams -of json'
     args = shlex.split(command)
     p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                          universal_newlines=True)
@@ -47,10 +52,7 @@ def PrintException():
     fname = f.f_code.co_filename
     linecache.checkcache(fname)
     line = linecache.getline(fname, lineno, f.f_globals)
-    print ('\nEXCEPTION IN ({}, LINE {} "{}"): {}'.format(fname,
-                                                          lineno,
-                                                          line.strip(),
-                                                          exc_obj))
+    print (f'\nEXCEPTION IN ({fname}, LINE {lineno} "{line.strip()}"): {exc_obj}')
 
 
 #  Setting the API key for usage of TMDB API
@@ -129,33 +131,34 @@ def start_process(filenames, mode):
                 else:
                     dvdsub_exists=True
             
-            print('\nSearching IMDb for "{}"'.format(title))
+            print(f'\nSearching IMDb for {title}')
             
-            imdb = Imdb()
+            imdb = Cinemagoer()
             movie_results = []
-            results = imdb.search_for_title(title)
+            results = imdb.search_movie(title)
             for result in results:
-                if result['type'] == "feature":
-                    movie_results.append(result)
-                    
+                movie_results.append(result)
+
+
+            ## Userinteract if nothing would be found
             if not movie_results:
                 while not movie_results:
-                    title = input('\nNo results for "' + title +
-                                  '" Enter alternate/correct movie title >> ')
-                    
-                    results = imdb.search_for_title(title)
+                    title = input(f'\nNo results for {title} Enter alternate/correct movie title >> ')
+
+                    results = imdb.search_movie(title)
                     for result in results:
-                        if result['type'] == "feature":
-                            movie_results.append(result)
+                        movie_results.append(result)
                 
             # The most prominent result is the first one
             # mpr - Most Prominent Result
             mpr = movie_results[0]
-            print('\nFetching data for {} ({})'.format(mpr['title'],
-                                                       mpr['year']))
+            print(f"\nFetching data for {mpr['title']} ({mpr['year']})")
                                                      
             # imdb_movie is a dict of info about the movie
-            imdb_movie = imdb.get_title(mpr['imdb_id'])
+            print(mpr.movieID)  ## todo
+            exit()
+
+            imdb_movie = imdb.get_title(mpr['imdb_id']) # TODO
             
             imdb_movie_title = imdb_movie['base']['title']
             imdb_movie_year = imdb_movie['base']['year']
