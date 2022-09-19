@@ -23,6 +23,31 @@ from mutagen.mp4 import MP4, MP4Cover
 ##
 from imdb import Cinemagoer
 
+from PyQt6.QtWidgets import (QApplication, QMainWindow)
+
+from main_window import Ui_Dialog
+
+class MyMainWindow(QMainWindow, Ui_Dialog):
+    def __init__(self, parent=None):
+        super(MyMainWindow, self).__init__(parent)
+        self.setupUi(self)
+
+
+app = QApplication(sys.argv)
+window = MyMainWindow()
+window.show()
+sys.exit(app.exec())
+
+exit()
+
+'''
+Todo:
+Gui
+Subtitles download und einbetten 
+
+'''
+
+
 
 
 # The following subtitle codecs are ingored if found in the file as they are

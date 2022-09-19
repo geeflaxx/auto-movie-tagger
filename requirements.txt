@@ -1,0 +1,4 @@
+tmdbsimple
+mutagen
+Cinemagoer
+PyQt6
