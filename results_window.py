@@ -7,13 +7,22 @@
 
 
 from PyQt6 import QtCore, QtGui, QtWidgets
+from PyQt6.QtWidgets import QTableWidgetItem
 
+
+
+from imdb import Cinemagoer
 
 class Ui_MainWindow(object):
-    def setupUi(self, MainWindow):
-        MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(800, 616)
-        self.centralwidget = QtWidgets.QWidget(MainWindow)
+
+    # Variables
+    movie_results = []
+
+
+    def setupUi(self, MyResultWindow):
+        MyResultWindow.setObjectName("MainWindow")
+        MyResultWindow.resize(800, 616)
+        self.centralwidget = QtWidgets.QWidget(MyResultWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.pushButton_select = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton_select.setGeometry(QtCore.QRect(490, 530, 75, 23))
@@ -21,7 +30,7 @@ class Ui_MainWindow(object):
         self.graphicsView = QtWidgets.QGraphicsView(self.centralwidget)
         self.graphicsView.setGeometry(QtCore.QRect(520, 100, 256, 192))
         self.graphicsView.setObjectName("graphicsView")
-        self.tableView_movies = QtWidgets.QTableView(self.centralwidget)
+        self.tableView_movies = QtWidgets.QTableWidget(self.centralwidget)
         self.tableView_movies.setGeometry(QtCore.QRect(10, 10, 331, 581))
         self.tableView_movies.setObjectName("tableView_movies")
         self.label_imdbnr = QtWidgets.QLabel(self.centralwidget)
@@ -87,14 +96,56 @@ class Ui_MainWindow(object):
         self.label_Description = QtWidgets.QLabel(self.centralwidget)
         self.label_Description.setGeometry(QtCore.QRect(380, 300, 71, 16))
         self.label_Description.setObjectName("label_Description")
-        MainWindow.setCentralWidget(self.centralwidget)
+        MyResultWindow.setCentralWidget(self.centralwidget)
 
-        self.retranslateUi(MainWindow)
-        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        self.retranslateUi(MyResultWindow)
+        QtCore.QMetaObject.connectSlotsByName(MyResultWindow)
 
-    def retranslateUi(self, MainWindow):
+    ## Searching Movies
+    def searchMovies(self, movieTitle):
+
+        print(f":{movieTitle}")
+        imdb = Cinemagoer()
+        results = imdb.search_movie(movieTitle)
+
+       # self.tableView_movies.setHorizontalHeaderLabels(('ID', 'Title'))
+       # self.tableView_movies.setRowCount(len(results))
+        self.tableView_movies.setRowCount(len(results))
+        self.tableView_movies.setColumnCount(3)
+
+        for index in range(len(results)):
+            self.tableView_movies.setItem(index,0, QTableWidgetItem(results[index].getID()))
+            self.tableView_movies.setItem(index,1, QTableWidgetItem(str(results[index]['year'])))
+            self.tableView_movies.setItem(index,2, QTableWidgetItem(results[index]['title']))
+
+        '''
+      #  exit()
+
+
+        for result in results:
+            print(len(results))
+            print(result)
+            self.movie_results.append(result)
+            print(index)
+
+            print(result.getID())
+            print(result['title'])
+
+            self.tableView_movies.setItem(self,0, index, str(result.getID()))
+            self.tableView_movies.setItem(self,1, index, str(result))
+            index += 1
+
+
+#        self.tableView_movies.setItem(self, 0,0, QTableWidgetItem("Test")))
+
+
+        print(self.movie_results)'''
+
+
+
+    def retranslateUi(self, MyResultWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        MyResultWindow.setWindowTitle(_translate("MainWindow", "Movie Result"))
         self.pushButton_select.setText(_translate("MainWindow", "Select"))
         self.label_imdbnr.setText(_translate("MainWindow", "IMDB Number"))
         self.label_rate.setText(_translate("MainWindow", "IMDB Rate"))

@@ -7,10 +7,24 @@
 
 
 from PyQt6 import QtCore, QtGui, QtWidgets
-from PyQt6.QtWidgets import QFileDialog
+from PyQt6.QtWidgets import QFileDialog, QMainWindow, QApplication
+
+import time
+
+from results_window import Ui_MainWindow
+
+import sys
+
+
+class MyResultWindow(QMainWindow, Ui_MainWindow):
+    def __init__(self, parent=None):
+        super(MyResultWindow, self).__init__(parent)
+        self.setupUi(self)
+
 
 
 class Ui_Dialog(object):
+
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
         Dialog.resize(678, 400)
@@ -21,9 +35,6 @@ class Ui_Dialog(object):
         self.graphicsView_cover = QtWidgets.QGraphicsView(Dialog)
         self.graphicsView_cover.setGeometry(QtCore.QRect(450, 120, 91, 101))
         self.graphicsView_cover.setObjectName("graphicsView_cover")
-        self.pushButton_search = QtWidgets.QPushButton(Dialog)
-        self.pushButton_search.setGeometry(QtCore.QRect(420, 20, 75, 23))
-        self.pushButton_search.setObjectName("pushButton_search")
         self.lineEdit_genre = QtWidgets.QLineEdit(Dialog)
         self.lineEdit_genre.setGeometry(QtCore.QRect(290, 70, 113, 20))
         self.lineEdit_genre.setObjectName("lineEdit_genre")
@@ -77,12 +88,21 @@ class Ui_Dialog(object):
         self.pushButton_open = QtWidgets.QPushButton(Dialog)
         self.pushButton_open.setGeometry(QtCore.QRect(100, 350, 75, 23))
         self.pushButton_open.setObjectName("pushButton")
+        self.pushButton_search = QtWidgets.QPushButton(Dialog)
+        self.pushButton_search.setGeometry(QtCore.QRect(420, 20, 75, 23))
+        self.pushButton_search.setObjectName("pushButton_search")
         self.label_cover = QtWidgets.QLabel(Dialog)
         self.label_cover.setGeometry(QtCore.QRect(480, 100, 71, 16))
         self.label_cover.setObjectName("label_cover")
 
 
+      #  self.pushButton_open.clicked.connect(self.chooseFolder) # type: ignore
         self.pushButton_open.clicked.connect(self.chooseFolder) # type: ignore
+       # self.pushButton_search.clicked.connect(self.searchWithTitel)
+        self.pushButton_search.clicked.connect(self.openResultWindow)
+
+
+
         self.retranslateUi(Dialog)
 
 
@@ -118,9 +138,33 @@ class Ui_Dialog(object):
         self.pushButton_open.setText(_translate("Dialog", "Open"))
         self.label_cover.setText(_translate("Dialog", "Cover"))
 
-## Events
+        ''' Events '''
 
+    ## For choosing the Movie Folder
     def chooseFolder(self):
         fd = QFileDialog()
         dirfolder = fd.getExistingDirectory(self, "Select Folder", ".") #OpenFileName(self, "Datei oeffnen", ".", "Nur bilder (*.jpg *.png)")
         print ( dirfolder )
+
+    ## Open the second Window
+    def openResultWindow(self):
+        if len(self.lineEdit_titel.text()) != 0:
+            self.window = QtWidgets.QMainWindow()
+            self.ui = MyResultWindow()
+            self.ui.setupUi(self.window)
+            self.ui.lineEdit_titel.setText(self.lineEdit_titel.text())
+            self.ui.searchMovies( self.lineEdit_titel.text() )
+            self.window.show()
+
+
+'''
+        print(self.lineEdit_titel.text())
+        if len(self.lineEdit_titel.text())!= 0:
+            imdb = Cinemagoer()
+            print(imdb.search_movie("Matrix"))
+
+            appResult = QApplication(sys.argv)
+            resultWindow = MyResultWindow()
+            resultWindow.show()
+            sys.exit(appResult.exec())
+'''
