@@ -7,11 +7,13 @@
 
 
 from PyQt6 import QtCore, QtGui, QtWidgets
-from PyQt6.QtWidgets import QTableWidgetItem
+from PyQt6.QtWidgets import QTableWidgetItem, QLabel
+from PyQt6.QtGui import QIcon, QPixmap
 
-
-
+from os.path import exists
 from imdb import Cinemagoer
+import requests
+import shutil
 
 class Ui_MainWindow(object):
 
@@ -27,9 +29,13 @@ class Ui_MainWindow(object):
         self.pushButton_select = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton_select.setGeometry(QtCore.QRect(490, 530, 75, 23))
         self.pushButton_select.setObjectName("pushButton_select")
-        self.graphicsView = QtWidgets.QGraphicsView(self.centralwidget)
-        self.graphicsView.setGeometry(QtCore.QRect(520, 100, 256, 192))
-        self.graphicsView.setObjectName("graphicsView")
+
+        self.photo = QtWidgets.QLabel(self.centralwidget)
+        self.photo.setGeometry(QtCore.QRect(520, 100, 256, 192))
+        self.photo.setText("")
+        self.photo.setScaledContents(True)
+        self.photo.setObjectName("photo")
+
         self.tableView_movies = QtWidgets.QTableWidget(self.centralwidget)
         self.tableView_movies.setGeometry(QtCore.QRect(10, 10, 331, 581))
         self.tableView_movies.setObjectName("tableView_movies")
@@ -42,12 +48,12 @@ class Ui_MainWindow(object):
         self.label_genre = QtWidgets.QLabel(self.centralwidget)
         self.label_genre.setGeometry(QtCore.QRect(360, 70, 47, 13))
         self.label_genre.setObjectName("label_genre")
-        self.label_regisseure = QtWidgets.QLabel(self.centralwidget)
-        self.label_regisseure.setGeometry(QtCore.QRect(360, 170, 71, 16))
-        self.label_regisseure.setObjectName("label_regisseure")
-        self.lineEdit_regisseur = QtWidgets.QLineEdit(self.centralwidget)
-        self.lineEdit_regisseur.setGeometry(QtCore.QRect(380, 190, 113, 20))
-        self.lineEdit_regisseur.setObjectName("lineEdit_regisseur")
+        self.label_votese = QtWidgets.QLabel(self.centralwidget)
+        self.label_votese.setGeometry(QtCore.QRect(360, 170, 71, 16))
+        self.label_votese.setObjectName("label_votes")
+        self.lineEdit_votes = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEdit_votes.setGeometry(QtCore.QRect(380, 190, 113, 20))
+        self.lineEdit_votes.setObjectName("lineEdit_votes")
         self.lineEdit_rate = QtWidgets.QLineEdit(self.centralwidget)
         self.lineEdit_rate.setGeometry(QtCore.QRect(380, 140, 113, 20))
         self.lineEdit_rate.setReadOnly(True)
@@ -74,9 +80,9 @@ class Ui_MainWindow(object):
         self.lineEdit_titel = QtWidgets.QLineEdit(self.centralwidget)
         self.lineEdit_titel.setGeometry(QtCore.QRect(380, 40, 113, 20))
         self.lineEdit_titel.setObjectName("lineEdit_titel")
-        self.lineEdit_producer = QtWidgets.QLineEdit(self.centralwidget)
-        self.lineEdit_producer.setGeometry(QtCore.QRect(380, 240, 113, 20))
-        self.lineEdit_producer.setObjectName("lineEdit_producer")
+        self.lineEdit_countrie = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEdit_countrie.setGeometry(QtCore.QRect(380, 240, 113, 20))
+        self.lineEdit_countrie.setObjectName("lineEdit_countrie")
         self.lineEdit_year = QtWidgets.QLineEdit(self.centralwidget)
         self.lineEdit_year.setGeometry(QtCore.QRect(520, 40, 61, 20))
         self.lineEdit_year.setText("")
@@ -101,45 +107,93 @@ class Ui_MainWindow(object):
         self.retranslateUi(MyResultWindow)
         QtCore.QMetaObject.connectSlotsByName(MyResultWindow)
 
-    ## Searching Movies
-    def searchMovies(self, movieTitle):
+        self.tableView_movies.cellClicked.connect(self.selectMovie)
+      #  self.tableView_movies.doubleClicked.connect(self.selectMovie)
+        self.pushButton_research.clicked.connect(self.research)
 
-        print(f":{movieTitle}")
+
+    def research(self):
+        if self.lineEdit_research.text() != "":
+            self.lineEdit_titel.setText(self.lineEdit_research.text())
+            self.lineEdit_research.setText("")
+            self.searchMovies()
+
+
+    ## Searching Movies /First try
+    def searchMovies(self):
+        """
+        if self.lineEdit_research.text() != "":
+            print("kein research")
+            movieTitle = self.lineEdit_titel.text()
+        else:
+            print("titel")
+            movieTitle = self.lineEdit_titel.text()
+        """
+        print(f":{self.lineEdit_titel.text()}")
         imdb = Cinemagoer()
-        results = imdb.search_movie(movieTitle)
 
-       # self.tableView_movies.setHorizontalHeaderLabels(('ID', 'Title'))
-       # self.tableView_movies.setRowCount(len(results))
-        self.tableView_movies.setRowCount(len(results))
+        print(self.lineEdit_imdbnr.text() )
+        if self.lineEdit_imdbnr.text() == "":
+            self.movie_results = imdb.search_movie(self.lineEdit_titel.text())
+            self.lineEdit_imdbnr.setText(str(self.movie_results[0].getID()))
+
+        movie = imdb.get_movie(self.movie_results[0].getID())
+
+
+        print(f"cover/{self.movie_results[0].getID()}.jpg")
+
+        ## Set Pictures
+        if exists(f"cover/{self.movie_results[0].getID()}.jpg"):
+            print("Exist")
+            self.photo.setPixmap(QPixmap(f"cover/{self.movie_results[0].getID()}.jpg"))
+        else:
+            image_url = movie['cover url']
+            print("not")
+            filename = f"cover/{self.movie_results[0].getID()}." + image_url.split(".")[-1]
+            print("not1")
+            req = requests.get(image_url, stream=True)
+            print("not2")
+            req.raw.decode_content = True  # Open a local file with wb ( write binary ) permission.
+            print("not3")
+            with open(filename, 'wb') as picture:
+                shutil.copyfileobj(req.raw, picture)
+
+            if exists(f"cover/{self.movie_results[0].getID()}.jpg"): self.photo.setPixmap(QPixmap(f"cover/{self.movie_results[0].getID()}.jpg"))
+
+
+        ## Set Metadata
+        self.lineEdit_genre.setText(movie['genres'][0])
+        self.lineEdit_year.setText(str(movie['year']))
+        self.lineEdit_rate.setText(str(movie['rating']))
+        self.lineEdit_votes.setText(str(movie['votes']))
+        self.lineEdit_countrie.setText(movie['countries'][0])
+
+        ## Set Description
+        model = QtGui.QStandardItemModel()
+        for film in movie['plot']:
+            item = QtGui.QStandardItem(film)
+            model.appendRow(item)
+
+        self.listView_description.setModel(model)
+
+        ## Fill Table
+        self.tableView_movies.setRowCount(len(self.movie_results))
         self.tableView_movies.setColumnCount(3)
+        self.tableView_movies.setHorizontalHeaderLabels( ['ID', 'Year', 'Title'] )
 
-        for index in range(len(results)):
-            self.tableView_movies.setItem(index,0, QTableWidgetItem(results[index].getID()))
-            self.tableView_movies.setItem(index,1, QTableWidgetItem(str(results[index]['year'])))
-            self.tableView_movies.setItem(index,2, QTableWidgetItem(results[index]['title']))
-
-        '''
-      #  exit()
+        for index in range(len(self.movie_results)):
+            self.tableView_movies.setItem(index,0, QTableWidgetItem(self.movie_results[index].getID()))
+            self.tableView_movies.setItem(index,1, QTableWidgetItem(str(self.movie_results[index]['year'])))
+            self.tableView_movies.setItem(index,2, QTableWidgetItem(self.movie_results[index]['title']))
 
 
-        for result in results:
-            print(len(results))
-            print(result)
-            self.movie_results.append(result)
-            print(index)
-
-            print(result.getID())
-            print(result['title'])
-
-            self.tableView_movies.setItem(self,0, index, str(result.getID()))
-            self.tableView_movies.setItem(self,1, index, str(result))
-            index += 1
-
-
-#        self.tableView_movies.setItem(self, 0,0, QTableWidgetItem("Test")))
-
-
-        print(self.movie_results)'''
+    def selectMovie(self, row, column):
+        print("-")
+        print(self.movie_results)
+        self.lineEdit_titel.setText(self.movie_results[row])
+        self.lineEdit_imdbnr.setText()
+       # self.searchMovies()
+       # print(self.tableView_movies.currentRow())
 
 
 
@@ -150,17 +204,17 @@ class Ui_MainWindow(object):
         self.label_imdbnr.setText(_translate("MainWindow", "IMDB Number"))
         self.label_rate.setText(_translate("MainWindow", "IMDB Rate"))
         self.label_genre.setText(_translate("MainWindow", "Genre"))
-        self.label_regisseure.setText(_translate("MainWindow", "Regisseur"))
-        self.lineEdit_regisseur.setToolTip(_translate("MainWindow", "Regisseur"))
+        self.label_votese.setText(_translate("MainWindow", "votes"))
+        self.lineEdit_votes.setToolTip(_translate("MainWindow", "votes"))
         self.lineEdit_rate.setToolTip(_translate("MainWindow", "IMDB Rate"))
         self.lineEdit_imdbnr.setToolTip(_translate("MainWindow", "Not Enabling"))
         self.lineEdit_genre.setToolTip(_translate("MainWindow", "Genre"))
-        self.label_produzenten.setText(_translate("MainWindow", "Producer"))
+        self.label_produzenten.setText(_translate("MainWindow", "countrie"))
         self.label_titel.setText(_translate("MainWindow", "Titel"))
         self.label_year.setText(_translate("MainWindow", "Year"))
         self.label_cover.setText(_translate("MainWindow", "Cover"))
         self.lineEdit_titel.setToolTip(_translate("MainWindow", "Titelname"))
-        self.lineEdit_producer.setToolTip(_translate("MainWindow", "Producer"))
+        self.lineEdit_countrie.setToolTip(_translate("MainWindow", "countrie"))
         self.lineEdit_year.setToolTip(_translate("MainWindow", "Year"))
         self.lineEdit_research.setToolTip(_translate("MainWindow", "Keyword for researching"))
         self.lineEdit_research.setPlaceholderText(_translate("MainWindow", "Keyword for researching"))

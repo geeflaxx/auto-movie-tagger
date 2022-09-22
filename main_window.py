@@ -101,8 +101,6 @@ class Ui_Dialog(object):
        # self.pushButton_search.clicked.connect(self.searchWithTitel)
         self.pushButton_search.clicked.connect(self.openResultWindow)
 
-
-
         self.retranslateUi(Dialog)
 
 
@@ -153,7 +151,7 @@ class Ui_Dialog(object):
             self.ui = MyResultWindow()
             self.ui.setupUi(self.window)
             self.ui.lineEdit_titel.setText(self.lineEdit_titel.text())
-            self.ui.searchMovies( self.lineEdit_titel.text() )
+            self.ui.searchMovies()
             self.window.show()
 
 
