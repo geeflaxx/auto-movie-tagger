@@ -100,6 +100,9 @@ class Ui_Dialog(object):
         self.pushButton_open.clicked.connect(self.chooseFolder) # type: ignore
        # self.pushButton_search.clicked.connect(self.searchWithTitel)
         self.pushButton_search.clicked.connect(self.openResultWindow)
+        self.pushButton_exit.clicked.connect(exit)
+
+        self.pushButton_start.clicked.connect() # todo
 
         self.retranslateUi(Dialog)
 
@@ -136,7 +139,12 @@ class Ui_Dialog(object):
         self.pushButton_open.setText(_translate("Dialog", "Open"))
         self.label_cover.setText(_translate("Dialog", "Cover"))
 
+
+
         ''' Events '''
+
+
+
 
     ## For choosing the Movie Folder
     def chooseFolder(self):

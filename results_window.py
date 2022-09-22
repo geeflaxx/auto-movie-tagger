@@ -8,7 +8,7 @@
 
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtWidgets import QTableWidgetItem, QLabel
-from PyQt6.QtGui import QIcon, QPixmap
+from PyQt6.QtGui import  QPixmap, QFont
 
 from os.path import exists
 from imdb import Cinemagoer
@@ -94,11 +94,19 @@ class Ui_MainWindow(object):
         self.pushButton_research.setGeometry(QtCore.QRect(570, 490, 75, 23))
         self.pushButton_research.setObjectName("pushButton_research")
         self.label_research = QtWidgets.QLabel(self.centralwidget)
-        self.label_research.setGeometry(QtCore.QRect(400, 470, 71, 16))
+        self.label_research.setGeometry(QtCore.QRect(400, 470, 100, 16))
         self.label_research.setObjectName("label_research")
+        '''
         self.listView_description = QtWidgets.QListView(self.centralwidget)
         self.listView_description.setGeometry(QtCore.QRect(370, 320, 401, 141))
         self.listView_description.setObjectName("listView_description")
+        '''
+
+
+        self.listView_description = QtWidgets.QTextEdit(self.centralwidget)
+        self.listView_description.setGeometry(QtCore.QRect(370, 320, 401, 141))
+        self.listView_description.setObjectName("listView_description")
+
         self.label_Description = QtWidgets.QLabel(self.centralwidget)
         self.label_Description.setGeometry(QtCore.QRect(380, 300, 71, 16))
         self.label_Description.setObjectName("label_Description")
@@ -120,7 +128,7 @@ class Ui_MainWindow(object):
 
 
     ## Searching Movies /First try
-    def searchMovies(self):
+    def searchMovies(self, showMovie = 0, showList = True):
         """
         if self.lineEdit_research.text() != "":
             print("kein research")
@@ -132,68 +140,90 @@ class Ui_MainWindow(object):
         print(f":{self.lineEdit_titel.text()}")
         imdb = Cinemagoer()
 
-        print(self.lineEdit_imdbnr.text() )
-        if self.lineEdit_imdbnr.text() == "":
+        if showList:  # New List
             self.movie_results = imdb.search_movie(self.lineEdit_titel.text())
-            self.lineEdit_imdbnr.setText(str(self.movie_results[0].getID()))
 
-        movie = imdb.get_movie(self.movie_results[0].getID())
+        if len(self.movie_results) > 0:  # if Movie exist
+            movie = imdb.get_movie(str(self.movie_results[showMovie].getID()))
 
 
-        print(f"cover/{self.movie_results[0].getID()}.jpg")
+            ## Set Metadata
+            self.lineEdit_genre.setText(movie['genres'][0])
+            self.lineEdit_imdbnr.setText(str(self.movie_results[showMovie].getID()))
+            self.lineEdit_year.setText(str(movie['year']))
+            self.lineEdit_rate.setText(str(movie['rating']))
+            self.lineEdit_votes.setText(str(movie['votes']))
+            self.lineEdit_countrie.setText(movie['countries'][0])
 
-        ## Set Pictures
-        if exists(f"cover/{self.movie_results[0].getID()}.jpg"):
-            print("Exist")
-            self.photo.setPixmap(QPixmap(f"cover/{self.movie_results[0].getID()}.jpg"))
+            '''
+            ## Set Description
+            model = QtGui.QStandardItemModel()
+            for film in movie['plot']:
+                item = QtGui.QStandardItem(film)
+                model.appendRow(item)
+            '''
+            desc = ""
+            for filmDesc in movie['plot']:
+                desc += filmDesc
+
+            #self.listView_description.setText(str(movie['plot']))
+            self.listView_description.setText(desc)
+
+            ## Fill Table
+            if showList:
+                self.tableView_movies.setRowCount(len(self.movie_results))
+                self.tableView_movies.setColumnCount(3)
+                self.tableView_movies.setHorizontalHeaderLabels( ['ID', 'Year', 'Title'] )
+
+                for index in range(len(self.movie_results)):
+                    self.tableView_movies.setItem(index,0, QTableWidgetItem(self.movie_results[index].getID()))
+                    self.tableView_movies.setItem(index,1, QTableWidgetItem(str(self.movie_results[index]['year'])))
+                    self.tableView_movies.setItem(index,2, QTableWidgetItem(self.movie_results[index]['title']))
+
+            ## Set Pictures
+            if exists(f"cover/{self.movie_results[showMovie].getID()}.jpg"):
+                self.photo.setPixmap(QPixmap(f"cover/{self.movie_results[showMovie].getID()}.jpg"))
+            else:
+                image_url = movie['cover url']
+                filename = f"cover/{self.movie_results[showMovie].getID()}." + image_url.split(".")[-1]
+                req = requests.get(image_url, stream=True)
+                req.raw.decode_content = True  # Open a local file with wb ( write binary ) permission.
+                with open(filename, 'wb') as picture:
+                    shutil.copyfileobj(req.raw, picture)
+
+                if exists(f"cover/{self.movie_results[showMovie].getID()}.jpg"): self.photo.setPixmap(QPixmap(f"cover/{self.movie_results[showMovie].getID()}.jpg"))
+
         else:
-            image_url = movie['cover url']
-            print("not")
-            filename = f"cover/{self.movie_results[0].getID()}." + image_url.split(".")[-1]
-            print("not1")
-            req = requests.get(image_url, stream=True)
-            print("not2")
-            req.raw.decode_content = True  # Open a local file with wb ( write binary ) permission.
-            print("not3")
-            with open(filename, 'wb') as picture:
-                shutil.copyfileobj(req.raw, picture)
+            self.label_titel.hide()
+            self.label_research.setText("Movie not exist")
+            self.label_research.setFont(QFont('Arial', 14))
+            self.label_research.setGeometry(QtCore.QRect(350, 490, 200, 50))
+            self.label_research.setStyleSheet("font-weight: bold; color: red; pixelSize: 34")
+            self.lineEdit_year.hide()
+            self.lineEdit_votes.hide()
+            self.lineEdit_countrie.hide()
+            self.lineEdit_imdbnr.hide()
+            self.lineEdit_research.hide()
+            self.lineEdit_rate.hide()
+            self.lineEdit_genre.hide()
+            self.photo.hide()
+            self.tableView_movies.hide()
+            self.pushButton_research.hide()
+            self.label_cover.hide()
+            self.label_votese.hide()
+            self.label_year.hide()
+            self.label_rate.hide()
+            self.label_genre.hide()
+            self.label_Description.hide()
+            self.label_imdbnr.hide()
+            self.label_produzenten.hide()
 
-            if exists(f"cover/{self.movie_results[0].getID()}.jpg"): self.photo.setPixmap(QPixmap(f"cover/{self.movie_results[0].getID()}.jpg"))
-
-
-        ## Set Metadata
-        self.lineEdit_genre.setText(movie['genres'][0])
-        self.lineEdit_year.setText(str(movie['year']))
-        self.lineEdit_rate.setText(str(movie['rating']))
-        self.lineEdit_votes.setText(str(movie['votes']))
-        self.lineEdit_countrie.setText(movie['countries'][0])
-
-        ## Set Description
-        model = QtGui.QStandardItemModel()
-        for film in movie['plot']:
-            item = QtGui.QStandardItem(film)
-            model.appendRow(item)
-
-        self.listView_description.setModel(model)
-
-        ## Fill Table
-        self.tableView_movies.setRowCount(len(self.movie_results))
-        self.tableView_movies.setColumnCount(3)
-        self.tableView_movies.setHorizontalHeaderLabels( ['ID', 'Year', 'Title'] )
-
-        for index in range(len(self.movie_results)):
-            self.tableView_movies.setItem(index,0, QTableWidgetItem(self.movie_results[index].getID()))
-            self.tableView_movies.setItem(index,1, QTableWidgetItem(str(self.movie_results[index]['year'])))
-            self.tableView_movies.setItem(index,2, QTableWidgetItem(self.movie_results[index]['title']))
-
-
+            self.lineEdit_titel.hide()
+            self.listView_description.hide()
+            self.pushButton_select.hide()
     def selectMovie(self, row, column):
-        print("-")
-        print(self.movie_results)
-        self.lineEdit_titel.setText(self.movie_results[row])
-        self.lineEdit_imdbnr.setText()
-       # self.searchMovies()
-       # print(self.tableView_movies.currentRow())
+        self.lineEdit_titel.setText(str(self.movie_results[row]))
+        self.searchMovies(row, False)
 
 
 
